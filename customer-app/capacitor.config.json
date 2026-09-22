@@ -1,0 +1,8 @@
+{
+  "appId": "com.gdrental.customer",
+  "appName": "GD Customer",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  }
+}

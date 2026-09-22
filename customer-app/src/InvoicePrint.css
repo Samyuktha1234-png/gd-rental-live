@@ -1,0 +1,884 @@
+/* =====================================================
+   GD CENTERING - INVOICE
+   COMPLETE SCREEN + PRINT CSS (BLUE THEME)
+===================================================== */
+
+
+/* =====================================================
+   MAIN PAGE
+===================================================== */
+
+.invoice-page {
+  min-height: 100vh;
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 50px 20px 70px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #eff6ff 0%, /* Updated to light blue */
+      #ffffff 40%,
+      #f8fafc 100%
+    );
+}
+
+
+/* =====================================================
+   TOP PAGE TITLE
+===================================================== */
+
+.invoice-heading {
+  width: 100%;
+  max-width: 820px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.invoice-label {
+  color: #2563eb; /* Updated to primary blue */
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+
+.invoice-heading h1 {
+  margin: 0;
+  color: #0b1f3a; /* Updated to Navy */
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.invoice-heading p {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 15px;
+}
+
+
+/* =====================================================
+   INVOICE WRAPPER
+===================================================== */
+
+.invoice-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+
+/* =====================================================
+   INVOICE PAPER
+===================================================== */
+
+.invoice-paper {
+  width: min(100%, 820px);
+  background: #ffffff;
+  border: 1px solid #e2e8f0; /* Soft border */
+  border-radius: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
+  box-shadow:
+    0 20px 55px rgba(11, 31, 58, 0.12), /* Adjusted shadow color */
+    0 5px 15px rgba(11, 31, 58, 0.06);
+}
+
+
+/* =====================================================
+   COMPANY HEADER
+===================================================== */
+
+.invoice-company {
+  width: 100%;
+  padding: 30px 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  box-sizing: border-box;
+}
+
+.company-logo {
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb, /* Blue gradient */
+      #1d4ed8
+    );
+  color: #ffffff;
+  font-size: 23px;
+  font-weight: 900;
+  box-shadow:
+    0 8px 20px rgba(37, 99, 235, 0.25); /* Blue shadow */
+}
+
+.company-details {
+  text-align: left;
+}
+
+.company-details h2 {
+  margin: 0;
+  color: #0b1f3a; /* Navy text */
+  font-size: 28px;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.company-details p {
+  margin: 7px 0 0;
+  color: #2563eb; /* Blue text */
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+
+.invoice-divider {
+  height: 1px;
+  margin: 0 35px;
+  background: #e2e8f0;
+}
+
+
+/* =====================================================
+   INVOICE META
+===================================================== */
+
+.invoice-meta {
+  padding: 22px 35px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.meta-item {
+  padding: 15px;
+  background: #f8fafc; /* Subtle blue/grey background */
+  border: 1px solid #e2e8f0; /* Soft border */
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.meta-label {
+  color: #2563eb; /* Blue label */
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.meta-item strong {
+  color: #0f172a;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+
+/* =====================================================
+   CUSTOMER + RENTAL INFORMATION
+===================================================== */
+
+.invoice-info-grid {
+  padding: 0 35px 25px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.invoice-info-box {
+  padding: 21px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow:
+    0 5px 18px rgba(11, 31, 58, 0.04);
+  box-sizing: border-box;
+}
+
+.box-title {
+  color: #2563eb; /* Blue text */
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.invoice-info-box h3 {
+  margin: 0 0 15px;
+  color: #0b1f3a; /* Navy text */
+  font-size: 18px;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.info-line {
+  display: grid;
+  grid-template-columns: 65px 1fr;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.info-line span {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.info-line strong {
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+
+/* =====================================================
+   RENTAL PERIOD
+===================================================== */
+
+.rental-days {
+  margin-bottom: 17px;
+  color: #0b1f3a;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 17px;
+}
+
+.date-row div {
+  padding: 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date-row span,
+.status-row span,
+.booking-id span {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.date-row strong {
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.status-row {
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #dcfce7; /* Keeping success green */
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.booking-id {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.booking-id strong {
+  color: #0f172a;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+
+/* =====================================================
+   RENTAL DETAILS TABLE
+===================================================== */
+
+.equipment-section {
+  padding: 0 35px 25px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  color: #0b1f3a;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.invoice-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.invoice-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.invoice-table th {
+  padding: 13px 10px;
+  background: #eff6ff; /* Soft blue table header */
+  color: #1d4ed8; /* Blue text */
+  border-bottom: 1px solid #bfdbfe; /* Blue border */
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.invoice-table td {
+  padding: 15px 10px;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.invoice-table th:first-child,
+.invoice-table td:first-child {
+  text-align: left;
+}
+
+.invoice-table th:nth-child(1) { width: 38%; }
+.invoice-table th:nth-child(2) { width: 17%; }
+.invoice-table th:nth-child(3) { width: 10%; }
+.invoice-table th:nth-child(4) { width: 10%; }
+.invoice-table th:nth-child(5) { width: 25%; }
+
+.equipment-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.equipment-name strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.equipment-name span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.amount-cell {
+  color: #0f172a !important;
+  font-weight: 800;
+}
+
+
+/* =====================================================
+   BOTTOM SECTION
+===================================================== */
+
+.invoice-bottom-grid {
+  padding: 0 35px 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+
+/* =====================================================
+   CUSTOMER SERVICE BOX
+===================================================== */
+
+.customer-service-box {
+  padding: 21px;
+  border-radius: 15px;
+  background:
+    linear-gradient(
+      135deg,
+      #eff6ff, /* Soft blue background */
+      #ffffff
+    );
+  border: 1px solid #bfdbfe; /* Blue border */
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative circles */
+.customer-service-box::before {
+  content: "";
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.07); /* Blue tint */
+  top: -45px;
+  right: -35px;
+}
+
+.customer-service-box::after {
+  content: "";
+  position: absolute;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.05); /* Blue tint */
+  bottom: -30px;
+  left: -25px;
+}
+
+
+/* Service title */
+.service-title {
+  color: #2563eb; /* Blue title */
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 2;
+}
+
+.service-subtitle {
+  margin: 0 0 17px;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.5;
+  position: relative;
+  z-index: 2;
+}
+
+
+/* Service icons */
+.service-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.service-feature {
+  padding: 10px 5px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dbeafe; /* Light blue border */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 2px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-feature:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 18px rgba(37, 99, 235, 0.12);
+}
+
+.service-icon {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 3px;
+  border-radius: 50%;
+  background: #eff6ff; /* Soft blue */
+  color: #2563eb; /* Added color for icons inside if they inherit */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.service-feature strong {
+  color: #1e293b;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.service-feature span {
+  color: #94a3b8;
+  font-size: 8px;
+}
+
+
+/* Service contact */
+.service-contact {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid #bfdbfe; /* Blue divider */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.service-contact div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.service-contact span {
+  color: #94a3b8;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.service-contact strong {
+  color: #334155;
+  font-size: 9px;
+  word-break: break-word;
+}
+
+
+/* =====================================================
+   CALCULATION BOX
+===================================================== */
+
+.calculation-box {
+  padding: 21px;
+  border-radius: 15px;
+  background: #f8fafc; /* Grey/Blue background */
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+  box-shadow: 0 6px 20px rgba(11, 31, 58, 0.05); /* Soft dark shadow */
+}
+
+.calculation-row {
+  padding: 7px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.calculation-row strong {
+  color: #0f172a;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.calculation-divider {
+  height: 1px;
+  margin: 8px 0;
+  background: #e2e8f0;
+}
+
+.grand-total-row {
+  margin-top: 9px;
+  padding: 14px;
+  border-radius: 11px;
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb, /* Blue gradient */
+      #1d4ed8
+    );
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  box-shadow:
+    0 7px 18px rgba(37, 99, 235, 0.2);
+}
+
+.grand-total-row span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.grand-total-row strong {
+  font-size: 17px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   INVOICE FOOTER
+===================================================== */
+
+.invoice-footer {
+  padding: 20px 35px;
+  border-top: 1px solid #e2e8f0;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 5px;
+}
+
+.invoice-footer strong {
+  color: #0b1f3a;
+  font-size: 14px;
+}
+
+.invoice-footer span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.invoice-footer small {
+  color: #94a3b8;
+  font-size: 9px;
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.invoice-actions {
+  width: 100%;
+  max-width: 820px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.back-button,
+.print-button {
+  min-height: 45px;
+  padding: 0 22px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.back-button {
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.print-button {
+  color: #ffffff;
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb, /* Blue Gradient */
+      #1d4ed8
+    );
+  border: none;
+  box-shadow:
+    0 8px 18px rgba(37, 99, 235, 0.25);
+}
+
+.back-button:hover,
+.print-button:hover {
+  transform: translateY(-2px);
+}
+
+.print-button:hover {
+  box-shadow:
+    0 12px 25px rgba(37, 99, 235, 0.32);
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+  .invoice-page { padding: 30px 12px 45px; }
+  .invoice-heading h1 { font-size: 32px; }
+  .invoice-heading p { font-size: 14px; }
+  .invoice-paper { border-radius: 15px; }
+  .invoice-company { flex-direction: column; padding: 24px 20px; }
+  .company-details { text-align: center; }
+  .company-details h2 { font-size: 24px; }
+  .invoice-meta, .invoice-info-grid, .invoice-bottom-grid { grid-template-columns: 1fr; }
+  .invoice-meta, .invoice-info-grid, .equipment-section, .invoice-bottom-grid { padding-left: 20px; padding-right: 20px; }
+  .invoice-divider { margin-left: 20px; margin-right: 20px; }
+  .invoice-footer { padding-left: 20px; padding-right: 20px; }
+  .invoice-actions { flex-direction: column; }
+  .back-button, .print-button { width: min(100%, 320px); }
+}
+
+
+/* =====================================================
+   PRINT
+===================================================== */
+
+@media print {
+  @page {
+    size: 148mm 210mm;
+    margin: 7mm;
+  }
+
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+  }
+
+  /* Hide website navigation */
+  nav, .navbar, .site-footer, footer:not(.invoice-footer) {
+    display: none !important;
+  }
+
+  .invoice-page {
+    width: 100%;
+    min-height: auto;
+    padding: 0;
+    margin: 0;
+    display: block;
+    background: #ffffff !important;
+  }
+
+  .invoice-heading { margin: 0 0 6mm; max-width: none; }
+  .invoice-label { font-size: 9pt; margin-bottom: 2mm; color: #2563eb !important; }
+  .invoice-heading h1 { font-size: 20pt; color: #0b1f3a !important; }
+  .invoice-heading p { font-size: 8pt; margin-top: 2mm; }
+
+  .invoice-wrapper { width: 100%; display: block; }
+  .invoice-paper {
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 4mm;
+    box-shadow: none;
+  }
+
+  .invoice-company { padding: 5mm; gap: 3mm; }
+  .company-logo {
+    width: 12mm;
+    height: 12mm;
+    border-radius: 3mm;
+    font-size: 11pt;
+    box-shadow: none;
+    background: #2563eb !important; /* Force solid blue on print */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .company-details h2 { font-size: 15pt; color: #0b1f3a !important; }
+  .company-details p { font-size: 6pt; letter-spacing: 1.2px; color: #2563eb !important; }
+
+  .invoice-divider { margin: 0 5mm; }
+
+  .invoice-meta { padding: 3mm 5mm; gap: 3mm; }
+  .meta-item { padding: 3mm; border-radius: 2mm; background: #f8fafc !important; -webkit-print-color-adjust: exact; }
+  .meta-label { font-size: 6pt; color: #2563eb !important; }
+  .meta-item strong { font-size: 8pt; }
+
+  .invoice-info-grid { padding: 0 5mm 4mm; gap: 3mm; }
+  .invoice-info-box { padding: 3.5mm; border-radius: 2.5mm; box-shadow: none; }
+  .box-title { font-size: 6.5pt; margin-bottom: 2mm; color: #2563eb !important; }
+  .invoice-info-box h3 { font-size: 10pt; margin-bottom: 2mm; color: #0b1f3a !important; }
+  .info-line { font-size: 7pt; grid-template-columns: 14mm 1fr; gap: 2mm; margin-top: 1.2mm; }
+
+  .rental-days { font-size: 13pt; margin-bottom: 2mm; color: #0b1f3a !important;}
+  .date-row { gap: 2mm; margin-bottom: 2mm; }
+  .date-row div { padding: 2mm; border-radius: 1.5mm; background: #f8fafc !important; -webkit-print-color-adjust: exact;}
+  .date-row span, .status-row span, .booking-id span { font-size: 5.5pt; }
+  .date-row strong { font-size: 7pt; }
+
+  .status-row { padding-top: 2mm; }
+  .status-badge { padding: 1mm 2mm; font-size: 6pt; background: #dcfce7 !important; color: #15803d !important; -webkit-print-color-adjust: exact;}
+
+  .booking-id { margin-top: 2mm; }
+  .booking-id strong { font-size: 6.5pt; }
+
+  /* Equipment */
+  .equipment-section { padding: 0 5mm 4mm; }
+  .section-title { font-size: 9pt; margin-bottom: 2mm; color: #0b1f3a !important; }
+  .invoice-table-wrapper { border-radius: 2mm; }
+  .invoice-table { min-width: 0; width: 100%; }
+  .invoice-table th { padding: 2.5mm 1.5mm; font-size: 6pt; background: #eff6ff !important; color: #1d4ed8 !important; border-bottom: 1px solid #bfdbfe !important; -webkit-print-color-adjust: exact; }
+  .invoice-table td { padding: 3mm 1.5mm; font-size: 7pt; }
+  .equipment-name strong { font-size: 7.5pt; }
+  .equipment-name span { font-size: 6pt; }
+
+  /* Bottom */
+  .invoice-bottom-grid { padding: 0 5mm 4mm; gap: 3mm; }
+
+  /* Customer service */
+  .customer-service-box { padding: 3.5mm; border-radius: 2.5mm; background: #eff6ff !important; border: 1px solid #bfdbfe !important; box-shadow: none; -webkit-print-color-adjust: exact;}
+  .service-title { font-size: 6.5pt; margin-bottom: 1.5mm; color: #2563eb !important; }
+  .service-subtitle { font-size: 6.5pt; margin-bottom: 2.5mm; }
+  .service-features { gap: 1.5mm; }
+  .service-feature { padding: 2mm 1mm; border-radius: 1.5mm; background: #ffffff !important; border-color: #dbeafe !important; -webkit-print-color-adjust: exact;}
+  .service-icon { width: 7mm; height: 7mm; font-size: 9pt; margin-bottom: 1mm; background: #eff6ff !important; color: #2563eb !important; -webkit-print-color-adjust: exact;}
+  .service-feature strong { font-size: 6pt; }
+  .service-feature span { font-size: 5.5pt; }
+  .service-contact { margin-top: 2.5mm; padding-top: 2mm; gap: 2mm; border-color: #bfdbfe !important; }
+  .service-contact span { font-size: 5pt; }
+  .service-contact strong { font-size: 5.5pt; }
+
+  /* Calculation */
+  .calculation-box { padding: 3.5mm; border-radius: 2.5mm; box-shadow: none; background: #f8fafc !important; border-color: #e2e8f0 !important; -webkit-print-color-adjust: exact;}
+  .calculation-row { font-size: 7pt; padding: 1.3mm 0; }
+  .calculation-divider { margin: 1.5mm 0; border-color: #e2e8f0 !important; }
+  .grand-total-row { padding: 2.5mm; margin-top: 2mm; border-radius: 2mm; box-shadow: none; background: #2563eb !important; color: #ffffff !important; -webkit-print-color-adjust: exact;}
+  .grand-total-row span { font-size: 7.5pt; color: #ffffff !important; }
+  .grand-total-row strong { font-size: 10pt; color: #ffffff !important; }
+
+  /* Footer */
+  .invoice-footer { padding: 3mm 5mm; gap: 1mm; }
+  .invoice-footer strong { font-size: 8pt; color: #0b1f3a !important; }
+  .invoice-footer span { font-size: 6pt; }
+  .invoice-footer small { font-size: 5.5pt; }
+
+  /* Hide buttons while printing */
+  .invoice-actions { display: none !important; }
+}
