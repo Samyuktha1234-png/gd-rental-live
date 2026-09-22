@@ -50,7 +50,7 @@ function App() {
 
   const handleConfirmAdvance = async (bookingId) => {
     try {
-      const response = await fetch(`https://gd-and-associates.onrender.com:5000:5000/api/bookings/${bookingId}`, {
+      const response = await fetch(`https://gd-and-associates.:5000:5000/api/bookings/${bookingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "Advance Paid & Confirmed" })
@@ -73,7 +73,7 @@ function App() {
     if (!window.confirm(`Are you sure you want to clear the due of ₹${booking.balanceAmount.toFixed(2)}? This will mark the payment as completed.`)) return;
 
     try {
-      const response = await fetch(`https://gd-and-associates.onrender.com:5000:5000/api/bookings/${booking._id}`, {
+      const response = await fetch(`https://gd-and-associates.:5000:5000/api/bookings/${booking._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -148,7 +148,7 @@ function App() {
     if (newBalance <= 0 && isFullyReturned) newStatus = "Payment Completed";
 
     try {
-      const response = await fetch(`https://gd-and-associates.onrender.com:5000:5000/api/bookings/${returnModal._id}`, {
+      const response = await fetch(`https://gd-and-associates.:5000:5000/api/bookings/${returnModal._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
