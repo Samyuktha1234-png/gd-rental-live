@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../CartContext";
+import { io } from "socket.io-client";
+
+// Initialize Socket connection to your backend
+const socket = io(import.meta.env.VITE_API_URL || "http://10.166.13.45:5000");
 
 function Booking() {
   const navigate = useNavigate();
@@ -17,8 +21,6 @@ function Booking() {
     endDate: "",
   });
 
-  const [advanceAmount, setAdvanceAmount] = useState("0");
-  const [otherCharges, setOtherCharges] = useState("0");
   const [error, setError] = useState("");
 
   // Automatically redirect to products if the cart is empty
@@ -28,12 +30,33 @@ function Booking() {
     }
   }, [cart, navigate]);
 
+  // Robust parser for date inputs (handles YYYY-MM-DD safely without timezone shifts)
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // 0-indexed
+      const day = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+    return new Date(dateStr);
+  };
+
   const rentalDays = useMemo(() => {
     if (!booking.startDate || !booking.endDate) return 0;
-    const start = new Date(`${booking.startDate}T00:00:00`);
-    const end = new Date(`${booking.endDate}T00:00:00`);
-    const difference = end.getTime() - start.getTime();
+    
+    const start = parseLocalDate(booking.startDate);
+    const end = parseLocalDate(booking.endDate);
+
+    if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+
+    const utc1 = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+    const utc2 = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+
+    const difference = utc2 - utc1;
     if (difference < 0) return 0;
+
     return Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
   }, [booking.startDate, booking.endDate]);
 
@@ -45,11 +68,10 @@ function Booking() {
     }, 0);
   }, [cart, rentalDays]);
 
-  const defectCharges = Number(otherCharges) || 0;
-  const total = subtotal + defectCharges;
-
-  const advancePayment = Number(advanceAmount) || 0;
-  const balanceAmount = total - advancePayment;
+  const total = subtotal;
+  const advancePayment = 0;
+  const otherCharges = 0;
+  const balanceAmount = total;
 
   const handleCustomerChange = (event) => {
     const { name, value } = event.target;
@@ -59,8 +81,21 @@ function Booking() {
 
   const handleBookingChange = (event) => {
     const { name, value } = event.target;
-    setBooking((prev) => ({ ...prev, [name]: value }));
-    setError("");
+    setBooking((prev) => {
+      const updated = { ...prev, [name]: value };
+      
+      // Auto-validate order if both are picked
+      if (updated.startDate && updated.endDate) {
+        const s = parseLocalDate(updated.startDate);
+        const e = parseLocalDate(updated.endDate);
+        if (s && e && e < s) {
+          setError("Rental End Date cannot be before Start Date.");
+        } else {
+          setError("");
+        }
+      }
+      return updated;
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -71,7 +106,6 @@ function Booking() {
       return;
     }
 
-    // Constraint check: Ensure the address contains between 2 and 6 digits for the PIN code
     const pincodeRegex = /\b\d{2,6}\b/;
     if (!pincodeRegex.test(customer.address)) {
       setError("Please include your City/Town and at least the last 2 digits of your PIN code in the address section.");
@@ -79,7 +113,7 @@ function Booking() {
     }
 
     if (!booking.startDate || !booking.endDate || rentalDays <= 0) {
-      setError("Please select valid rental dates.");
+      setError("Please select valid rental dates (End date must be on or after start date).");
       return;
     }
     if (cart.length === 0) {
@@ -114,7 +148,7 @@ function Booking() {
       rentalDays,
       subtotal,
       tax: 0,
-      otherCharges: defectCharges,
+      otherCharges,
       totalPrice: total,
       advancePayment,
       balanceAmount,
@@ -124,7 +158,9 @@ function Booking() {
     };
 
     try {
-      const response = await fetch("https://gd-and-associates.onrender.com:5000:5000/api/bookings", {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://10.166.13.45:5000";
+      
+      const response = await fetch(`${apiUrl}/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingPayload),
@@ -136,12 +172,13 @@ function Booking() {
         throw new Error(data.error || "Failed to save booking.");
       }
 
+      socket.emit("customer_created_booking", data.data || bookingPayload);
+
       const existingBookings = JSON.parse(localStorage.getItem("gdRentalBookings") || "[]");
       localStorage.setItem(
         "gdRentalBookings",
         JSON.stringify([bookingPayload, ...existingBookings])
       );
-
       localStorage.setItem("gdRentalBooking", JSON.stringify(bookingPayload));
 
       clearCart();
@@ -158,6 +195,9 @@ function Booking() {
   if (!cart || cart.length === 0) {
     return null;
   }
+
+  // Get today's date in YYYY-MM-DD format to set as min selectable date
+  const todayStr = new Date().toISOString().split("T")[0];
 
   return (
     <div className="booking-page" style={{ paddingTop: "20px" }}>
@@ -211,64 +251,28 @@ function Booking() {
               <div className="form-grid">
                 <div className="form-group">
                   <label>Rental Start Date *</label>
-                  <input type="date" name="startDate" value={booking.startDate} onChange={handleBookingChange} />
+                  <input 
+                    type="date" 
+                    name="startDate" 
+                    min={todayStr}
+                    value={booking.startDate} 
+                    onChange={handleBookingChange} 
+                  />
                 </div>
                 <div className="form-group">
                   <label>Rental End Date *</label>
-                  <input type="date" name="endDate" value={booking.endDate} onChange={handleBookingChange} />
+                  <input 
+                    type="date" 
+                    name="endDate" 
+                    min={booking.startDate || todayStr}
+                    value={booking.endDate} 
+                    onChange={handleBookingChange} 
+                  />
                 </div>
               </div>
               <div className="rental-days-display">
                 <span>Rental Duration</span>
                 <strong>{rentalDays > 0 ? `${rentalDays} Day${rentalDays > 1 ? "s" : ""}` : "--"}</strong>
-              </div>
-            </div>
-
-            <div className="booking-card">
-              <div className="booking-card-heading">
-                <div className="booking-step">03</div>
-                <div>
-                  <h2>Advance Payment</h2>
-                  <p>Enter the advance amount paid for this booking.</p>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Advance Amount (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={advanceAmount}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/^0+(?=\d)/, '');
-                    setAdvanceAmount(val === '' ? '0' : val);
-                  }}
-                  style={{ padding: "10px", fontSize: "16px", border: "1px solid #cbd5e1", borderRadius: "6px", width: "100%" }}
-                />
-              </div>
-            </div>
-
-            <div className="booking-card">
-              <div className="booking-card-heading">
-                <div className="booking-step">04</div>
-                <div>
-                  <h2>Other Charges (In case of any defect)</h2>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Defect / Extra Charges Amount (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={otherCharges}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/^0+(?=\d)/, '');
-                    setOtherCharges(val === '' ? '0' : val);
-                  }}
-                  style={{ padding: "10px", fontSize: "16px", border: "1px solid #cbd5e1", borderRadius: "6px", width: "100%" }}
-                />
-                <small style={{ color: "#64748b", marginTop: "4px", display: "block" }}>
-                  Charges due to tear and wear
-                </small>
               </div>
             </div>
 
@@ -329,12 +333,6 @@ function Booking() {
                 <span>Subtotal</span>
                 <strong>₹{subtotal.toFixed(2)}</strong>
               </div>
-              {defectCharges > 0 && (
-                <div className="summary-row" style={{ color: "#d97706" }}>
-                  <span>Other Charges (Defect)</span>
-                  <strong>₹{defectCharges.toFixed(2)}</strong>
-                </div>
-              )}
               <div className="summary-total">
                 <span>Total Amount</span>
                 <strong>₹{total.toFixed(2)}</strong>

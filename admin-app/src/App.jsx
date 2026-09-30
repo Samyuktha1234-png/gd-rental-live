@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client"; 
 import logoImg from "./assets/logo.png";
+
+// Listens to the customer backend (Port 5000) for instant live booking popups
+const socket = io("http://10.166.13.45:5000"); 
 
 function App() {
   const [bookings, setBookings] = useState([]);
@@ -7,19 +11,23 @@ function App() {
   const [activeInvoice, setActiveInvoice] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Return Modal State
   const [returnModal, setReturnModal] = useState(null);
   const [actualDays, setActualDays] = useState(1);
   const [defectCharges, setDefectCharges] = useState(0);
-  
-  // Track which items are selected (checked) for return
   const [selectedForReturn, setSelectedForReturn] = useState({});
+
+  // NEW: Advance Payment Modal State
+  const [advanceModal, setAdvanceModal] = useState(null);
+  const [advanceInput, setAdvanceInput] = useState("");
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch("https://gd-and-associates.onrender.com/api/products");
+      // API calls go to the Admin backend (Port 5001)
+      const response = await fetch("http://10.166.13.45:5001/api/admin/bookings");
       const result = await response.json();
-      if (result.success) {
-        setBookings(result.data);
+      if (result.success !== false) {
+        setBookings(result.data || result);
       }
     } catch (error) {
       console.error("Failed to fetch bookings:", error);
@@ -30,37 +38,63 @@ function App() {
 
   useEffect(() => {
     fetchBookings();
+
+    socket.on("new_booking_alert", (newBooking) => {
+      setBookings((prevBookings) => [newBooking, ...prevBookings]);
+    });
+
+    return () => {
+      socket.off("new_booking_alert");
+    };
   }, []);
 
-  // UTILITY: Calculate true rental days based on dates to avoid DB corruption errors
   const getTrueRentalDays = (start, end, fallback) => {
     if (!start || !end) return fallback || 1;
     const s = new Date(start);
     const e = new Date(end);
     if (isNaN(s.getTime()) || isNaN(e.getTime())) return fallback || 1;
     
-    // Use UTC to prevent daylight saving time differences from skewing the day count
     const utc1 = Date.UTC(s.getFullYear(), s.getMonth(), s.getDate());
     const utc2 = Date.UTC(e.getFullYear(), e.getMonth(), e.getDate());
     
-    // +1 ensures inclusive counting (e.g. 15th to 19th = 5 days)
     const diffDays = Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24)) + 1;
     return diffDays > 0 ? diffDays : (fallback || 1);
   };
 
-  const handleConfirmAdvance = async (bookingId) => {
+  // Submits the advance payment from the new modal
+  const submitAdvancePayment = async () => {
+    if (!advanceModal) return;
+    
+    const advAmount = Number(advanceInput) || 0;
+    const newBalance = advanceModal.totalPrice - advAmount;
+    const targetId = advanceModal._id || advanceModal.id;
+
     try {
-      const response = await fetch(`https://gd-and-associates.:5000:5000/api/bookings/${bookingId}`, {
+      const response = await fetch(`http://10.166.13.45:5001/api/bookings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Advance Paid & Confirmed" })
+        body: JSON.stringify({ 
+          status: "Advance Paid & Confirmed",
+          advancePayment: advAmount,
+          balanceAmount: newBalance
+        })
       });
       
       const result = await response.json();
-      if (result.success) {
-        alert("Advance payment confirmed in database!");
-        fetchBookings(); 
-        setActiveInvoice(result.data); 
+      if (result.success || response.ok) {
+        alert("Advance payment recorded & booking confirmed!");
+        
+        const finalData = { 
+          ...advanceModal, 
+          status: "Advance Paid & Confirmed",
+          advancePayment: advAmount,
+          balanceAmount: newBalance
+        };
+
+        setBookings(prev => prev.map(b => (b._id || b.id) === targetId ? finalData : b));
+        setAdvanceModal(null); // Close modal
+      } else {
+        throw new Error(result.error || "Failed to update");
       }
     } catch (error) {
       console.error("Update failed:", error);
@@ -68,26 +102,25 @@ function App() {
     }
   };
 
-  // NEW FEATURE: Instantly clear dues and mark as Payment Completed
   const handleClearDues = async (booking) => {
     if (!window.confirm(`Are you sure you want to clear the due of ₹${booking.balanceAmount.toFixed(2)}? This will mark the payment as completed.`)) return;
 
     try {
-      const response = await fetch(`https://gd-and-associates.:5000:5000/api/bookings/${booking._id}`, {
+      const targetId = booking._id || booking.id;
+      const response = await fetch(`http://10.166.13.45:5001/api/bookings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           status: "Payment Completed",
-          advancePayment: booking.totalPrice, // Force advance to match total, making balance 0
+          advancePayment: booking.totalPrice, 
           balanceAmount: 0 
         })
       });
       
       const result = await response.json();
-      if (result.success) {
+      if (result.success || response.ok) {
         alert("Payment Completed and dues cleared!");
         
-        // Force frontend override
         const finalData = { 
           ...booking, 
           status: "Payment Completed",
@@ -95,8 +128,8 @@ function App() {
           balanceAmount: 0 
         };
         
-        setBookings(prev => prev.map(b => b._id === finalData._id ? finalData : b));
-        if (activeInvoice && activeInvoice._id === finalData._id) {
+        setBookings(prev => prev.map(b => (b._id || b.id) === (finalData._id || finalData.id) ? finalData : b));
+        if (activeInvoice && (activeInvoice._id || activeInvoice.id) === (finalData._id || finalData.id)) {
           setActiveInvoice(finalData);
         }
       }
@@ -111,12 +144,10 @@ function App() {
 
     const trueEstDays = getTrueRentalDays(returnModal.startDate, returnModal.endDate, returnModal.rentalDays);
 
-    // 1. Calculate updated items based on exactly what was checked
     const updatedItems = returnModal.items.map((item, i) => {
       const pendingQty = item.quantity - (item.returnedQty || 0);
       const returningNow = selectedForReturn[i] ? pendingQty : 0;
       
-      // ONLY assign the typed "actualDays" to the specific items being returned right now
       const currentDaysUsed = returningNow > 0 ? Number(actualDays) : (item.daysUsed || trueEstDays);
 
       return {
@@ -126,11 +157,9 @@ function App() {
       };
     });
 
-    // 2. Check if ALL items are now fully returned
     const isFullyReturned = updatedItems.every(item => item.returnedQty >= item.quantity);
     let newStatus = isFullyReturned ? "Completed" : "Partially Returned";
 
-    // 3. SMART BILLING: Calculate subtotal based on Returned vs Pending independently
     const newSubtotal = updatedItems.reduce((sum, item) => {
       const returned = item.returnedQty || 0;
       const pending = item.quantity - returned;
@@ -144,11 +173,11 @@ function App() {
     const newTotal = newSubtotal + Number(defectCharges);
     const newBalance = newTotal - returnModal.advancePayment;
 
-    // If they overpaid or balance is 0 after this calculation, auto-flag it as Payment Completed
     if (newBalance <= 0 && isFullyReturned) newStatus = "Payment Completed";
 
     try {
-      const response = await fetch(`https://gd-and-associates.:5000:5000/api/bookings/${returnModal._id}`, {
+      const targetId = returnModal._id || returnModal.id;
+      const response = await fetch(`http://10.166.13.45:5001/api/bookings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -164,12 +193,11 @@ function App() {
       
       const result = await response.json();
       
-      if (result.success) {
+      if (result.success || response.ok) {
         alert(isFullyReturned ? "Equipment returned and bill updated!" : "Partial return recorded successfully!");
         
-        // FORCE FRONTEND OVERRIDE: Update local state immediately with perfect math
         const finalData = { 
-          ...result.data, 
+          ...(result.data || result), 
           status: newStatus,
           items: updatedItems, 
           subtotal: newSubtotal,
@@ -179,7 +207,7 @@ function App() {
           rentalDays: trueEstDays 
         };
         
-        setBookings(prev => prev.map(b => b._id === finalData._id ? finalData : b));
+        setBookings(prev => prev.map(b => (b._id || b.id) === (finalData._id || finalData.id) ? finalData : b));
         setActiveInvoice(finalData);
         setReturnModal(null); 
       }
@@ -221,9 +249,6 @@ function App() {
     return `${day}-${month}-${year}`;
   };
 
-  /* ====================================================================
-     VIEW: BILL BOOK INVOICE PRINT SCREEN
-  ==================================================================== */
   if (activeInvoice) {
     const b = activeInvoice;
     const currentDate = new Date().toLocaleDateString('en-GB'); 
@@ -231,7 +256,6 @@ function App() {
     
     const trueEstDays = getTrueRentalDays(b.startDate, b.endDate, b.rentalDays);
 
-    // DYNAMIC INVOICE SPLITTER: Splits items into separate "Returned" rows and "Pending" rows
     const displayItems = [];
     b.items.forEach((item) => {
       const returned = item.returnedQty || 0;
@@ -242,7 +266,7 @@ function App() {
           name: `${item.name} (Pending)`,
           quantity: pending,
           price: item.price,
-          days: trueEstDays, // Pending items always show the true estimated length
+          days: trueEstDays, 
           amount: pending * item.price * trueEstDays,
           isReturned: false
         });
@@ -253,7 +277,7 @@ function App() {
           name: `${item.name} (Returned)`,
           quantity: returned,
           price: item.price,
-          days: item.daysUsed || trueEstDays, // Returned items show the specific days used
+          days: item.daysUsed || trueEstDays, 
           amount: returned * item.price * (item.daysUsed || trueEstDays),
           isReturned: true
         });
@@ -262,7 +286,6 @@ function App() {
 
     const itemsSubtotal = displayItems.reduce((sum, item) => sum + item.amount, 0);
 
-    // Determine the clear cut invoice type based on return status
     let invoiceLabel = "ADVANCE INVOICE";
     if (b.status === "Completed" || b.status === "Payment Completed") invoiceLabel = "FINAL INVOICE";
     else if (b.status === "Partially Returned") invoiceLabel = "PARTIAL RETURN INVOICE";
@@ -278,7 +301,6 @@ function App() {
           position: "relative" 
         }}>
           
-          {/* PAGE 1: INVOICE */}
           <div className="watermarked-page invoice-page" style={{ padding: "1in 20px", minHeight: "280mm", position: "relative", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", position: "relative", zIndex: 1 }}>
@@ -352,7 +374,6 @@ function App() {
                     <td style={{ border: "1px solid #000", padding: "8px" }}>{i + 1}</td>
                     <td style={{ border: "1px solid #000", padding: "8px", textAlign: "left", fontWeight: "bold" }}>
                       {item.name}
-                      {/* Explicitly diffentiate between Returned (Billed) and Pending (Estimated) */}
                       <span style={{ display: "block", fontSize: "11px", color: item.isReturned ? "#047857" : "#b45309", marginTop: "2px" }}>
                         ({item.isReturned ? `Billed for ${item.days} days` : `Est. for ${item.days} days`})
                       </span>
@@ -452,7 +473,6 @@ function App() {
 
           </div>
           
-          {/* PAGE 2: TERMS AND CONDITIONS */}
           <div className="watermarked-page terms-page" style={{ padding: "1in 20px", minHeight: "280mm", position: "relative", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             <div style={{ border: "2px solid #000", padding: "30px 40px", flexGrow: 1, boxSizing: "border-box", backgroundColor: "transparent", position: "relative", zIndex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               
@@ -470,7 +490,7 @@ function App() {
                   <li>சீட், காளம் பாக்ஸ், ஜாக்கி, ஸ்பேன் திருப்பி ஒப்படைக்கும் போது நன்றாக சுத்தம் செய்து ஆயில் போட்டு கொடுக்க வேண்டும், இல்லை என்றால் சுத்தம் செய்து ஆயில் அடிக்கும் லேபர் தொகை அட்வான்சில் பிடித்தம் செய்யப்படும்.</li>
                   <li>பொருட்களை வாடகைக்கு எடுக்கும் போது 45 நாட்களுக்கு உண்டான பணத்தை முன் பணமாக கொடுக்க வேண்டும்.</li>
                   <li>வாடகை பொருட்கள் குறிப்பிட்ட சைட்டை தவிர வேறு சைட்-ல் கண்டிப்பாக உபயோகிக்கக்கூடாது.</li>
-                  <li>கட்டிட உரிமையாளர் [Aadhaar Redacted] நகல் சமர்ப்பிக்க வேண்டும்.</li>
+                  <li>கட்டிட உரிமையாளர் ஆதார் அட்டை நகல் சமர்ப்பிக்க வேண்டும்.</li>
                   <li>பில்டிங் சென்ட்ரிங் காண்டிராக்டர் மற்றும் உரிமையாளர் இடையில் ஏதேனும் மனக்கசப்பு ஏற்படும் பட்சத்தில் எங்களது நிறுவனத்திற்கு யாருடைய அனுமதியும் இன்றி எங்களுடைய பொருட்களை திரும்ப எடுத்துக் கொள்ளும் உரிமை உள்ளது.</li>
                   <li>வாடகைத் தொகை 50000 க்கு மேல் இருந்தால், 20 ரூபாய் முத்திரைத் தாளில் ஒப்பந்தம் கையொப்பமிட வேண்டும்.</li>
                 </ol>
@@ -501,7 +521,6 @@ function App() {
 
         </div>
 
-        {/* Action Buttons (Hidden during Print) */}
         <div style={{ textAlign: "center", marginTop: "30px" }} className="no-print">
           <button onClick={() => window.print()} style={{ padding: "12px 25px", backgroundColor: "#0ea5e9", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", marginRight: "15px", fontSize: "16px", fontWeight: "bold", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
             🖨 Print 2-Sided Invoice
@@ -523,7 +542,7 @@ function App() {
             transform: translate(-50%, -50%);
             width: 350px;
             height: 350px;
-            background-image: url(${JSON.stringify(logoImg)});
+            background-image: url(${logoImg});
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
@@ -543,7 +562,6 @@ function App() {
             .print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; }
             .no-print { display: none !important; } 
             
-            /* Clean single page break between the two sheets */
             .invoice-page {
               page-break-after: always !important;
               break-after: page !important;
@@ -554,14 +572,10 @@ function App() {
     );
   }
 
-  /* ====================================================================
-     VIEW: MAIN MANAGEMENT DASHBOARD
-  ==================================================================== */
   return (
     <div style={{ backgroundColor: "#f1f5f9", minHeight: "100vh", fontFamily: "sans-serif" }}>
       
-      <style>
-        {`
+      <style>{`
           .admin-booking-card {
             transition: all 0.3s ease-in-out;
           }
@@ -575,9 +589,48 @@ function App() {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;
           }
-        `}
-      </style>
+      `}</style>
 
+      {/* NEW ADVANCE PAYMENT MODAL */}
+      {advanceModal && (
+        <div className="modal-overlay">
+          <div style={{ background: "white", padding: "30px", borderRadius: "12px", width: "400px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}>
+            <h2 style={{ margin: "0 0 15px 0", color: "#0f172a" }}>Confirm Booking</h2>
+            <p style={{ margin: "0 0 20px 0", fontSize: "14px", color: "#64748b" }}>
+              Total Order Amount: <strong>₹{advanceModal.totalPrice.toFixed(2)}</strong>
+            </p>
+
+            <div style={{ marginBottom: "25px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "bold" }}>Enter Advance Payment Received (₹):</label>
+              <input 
+                type="number" 
+                min="0" 
+                value={advanceInput} 
+                onChange={(e) => setAdvanceInput(e.target.value)}
+                placeholder="e.g., 500"
+                style={{ width: "100%", padding: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", boxSizing: "border-box", fontSize: "16px" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button 
+                onClick={submitAdvancePayment} 
+                style={{ flex: 1, backgroundColor: "#10b981", color: "white", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}
+              >
+                Save & Confirm
+              </button>
+              <button 
+                onClick={() => setAdvanceModal(null)} 
+                style={{ backgroundColor: "#e2e8f0", color: "#334155", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EXISTING RETURN MODAL */}
       {returnModal && (
         <div className="modal-overlay">
           <div style={{ background: "white", padding: "30px", borderRadius: "12px", width: "450px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}>
@@ -587,7 +640,6 @@ function App() {
               Originally booked for <strong>{getTrueRentalDays(returnModal.startDate, returnModal.endDate, returnModal.rentalDays)} days</strong>.
             </p>
 
-            {/* PARTIAL RETURN CHECKBOX UI (Defaults to Unchecked) */}
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "bold" }}>Select Items Returning Now:</label>
               <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
@@ -661,7 +713,6 @@ function App() {
         </div>
       )}
 
-      {/* HEADER WITH LOGO AND TITLE CENTERED */}
       <header style={{ backgroundColor: "white", padding: "15px 30px", display: "flex", justifyContent: "center", alignItems: "center", gap: "15px", borderBottom: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
         <img src={logoImg} alt="GD Logo" style={{ height: "50px", objectFit: "contain" }} onError={(e) => { e.target.style.display = 'none'; }} />
         <h2 style={{ margin: "0", fontSize: "24px", color: "#0f172a", fontWeight: "bold", letterSpacing: "0.5px" }}>
@@ -701,7 +752,6 @@ function App() {
               const isCompleted = booking.status === "Completed";
               const isPaymentCompleted = booking.status === "Payment Completed";
               
-              // We check if any items are actually still pending
               const hasPendingItems = booking.items?.some(item => (item.quantity - (item.returnedQty || 0)) > 0);
               
               const isSearched = searchTerm.trim() !== "";
@@ -709,7 +759,7 @@ function App() {
 
               return (
                 <div 
-                  key={booking._id} 
+                  key={booking._id || booking.id} 
                   className="admin-booking-card"
                   style={{ 
                     background: "white", 
@@ -754,12 +804,14 @@ function App() {
 
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
                     {isPending && (
-                      <button onClick={() => handleConfirmAdvance(booking._id)} style={{ backgroundColor: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
+                      <button 
+                        onClick={() => { setAdvanceModal(booking); setAdvanceInput(""); }} 
+                        style={{ backgroundColor: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+                      >
                         ✓ Confirm Advance Paid
                       </button>
                     )}
                     
-                    {/* The Process Return button stays visible as long as items are pending, even if they already paid! */}
                     {hasPendingItems && !isPending && (
                       <button 
                         onClick={() => {
@@ -779,12 +831,10 @@ function App() {
                       </button>
                     )}
 
-                    {/* NEW: Clear Dues Button */}
                     {booking.balanceAmount > 0 && !isPending && (
                       <button 
                         onClick={() => handleClearDues(booking)} 
-                        style={{ backgroundColor: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
-                      >
+                        style={{ backgroundColor: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
                         💳 Clear Dues
                       </button>
                     )}

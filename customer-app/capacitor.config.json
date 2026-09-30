@@ -1,8 +1,12 @@
 {
-  "appId": "com.gdrental.customer",
-  "appName": "GD Customer",
+  "appId": "com.gdassociates.rental",
+  "appName": "GD & Associates",
   "webDir": "dist",
   "server": {
-    "cleartext": true
+    "cleartext": true,
+    "androidSchema": "http"
+  },
+  "android": {
+    "allowMixedContent": true
   }
 }
