@@ -4,7 +4,7 @@ import { useCart } from "../CartContext";
 import { io } from "socket.io-client";
 
 // Initialize Socket connection to your backend
-const socket = io(import.meta.env.VITE_API_URL || "http://10.166.13.45:5000");
+const socket = io(import.meta.env.VITE_API_URL || "https://gd-associates.store");
 
 function Booking() {
   const navigate = useNavigate();
@@ -158,7 +158,7 @@ function Booking() {
     };
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://10.166.13.45:5000";
+      const apiUrl = import.meta.env.VITE_API_URL || "https://gd-associates.store";
       
       const response = await fetch(`${apiUrl}/api/bookings`, {
         method: "POST",

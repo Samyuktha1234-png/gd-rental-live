@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import logoImg from "./assets/logo.png";
 
 // Listens to the customer backend (Port 5000) for instant live booking popups
-const socket = io("http://10.166.13.45:5000"); 
+const socket = io("https://gd-associates.store"); 
 
 function App() {
   const [bookings, setBookings] = useState([]);
@@ -24,7 +24,7 @@ function App() {
   const fetchBookings = async () => {
     try {
       // API calls go to the Admin backend (Port 5001)
-      const response = await fetch("http://10.166.13.45:5001/api/admin/bookings");
+      const response = await fetch("https://gd-associates.store/api/admin/bookings");
       const result = await response.json();
       if (result.success !== false) {
         setBookings(result.data || result);
@@ -70,7 +70,7 @@ function App() {
     const targetId = advanceModal._id || advanceModal.id;
 
     try {
-      const response = await fetch(`http://10.166.13.45:5001/api/bookings/${targetId}`, {
+      const response = await fetch(`https://gd-associates.store/api/bookings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -107,7 +107,7 @@ function App() {
 
     try {
       const targetId = booking._id || booking.id;
-      const response = await fetch(`http://10.166.13.45:5001/api/bookings/${targetId}`, {
+      const response = await fetch(`https://gd-associates.store/api/bookings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -177,7 +177,7 @@ function App() {
 
     try {
       const targetId = returnModal._id || returnModal.id;
-      const response = await fetch(`http://10.166.13.45:5001/api/bookings/${targetId}`, {
+      const response = await fetch(`https://gd-associates.store/api/bookings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
